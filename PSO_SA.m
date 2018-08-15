@@ -18,9 +18,9 @@ format short;
 c1=2.4962;             %学习因子1
 c2=1.4962;             %学习因子2
 w=0.7298;              %惯性权重
-MaxDT=5;            %最大迭代次数
+MaxDT=100;            %最大迭代次数
 D=9;                  %搜索空间维数（未知数个数）
-N=600;                  %初始化群体个体数目
+N=30;                  %初始化群体个体数目
 eps=2;           %设置精度(在已知最小值时候用)
 XMAX = [10,20,10,  10,20,10,  10,20,10];
 XMIN = [0,0,0,  0,0,0,  0,0,0];
@@ -81,11 +81,22 @@ for t=1:MaxDT
         bb = (judge<XMIN);
         v(i,:) = -2* aa.*v(i,:) +v(i);
         v(i,:) = -2* bb.*v(i,:) +v(i);
-        x(i,:) = x(i,:) + v(i,:);
-        x(i,:) = roundn(x(i,:),-eps);
+        ToX = x(i,:) + v(i,:);
+        ToX = min(XMAX,ToX);
+        ToX = max(XMIN,ToX);
         
+        ToX = roundn(ToX,-eps);
+        fit_to = fitness(ToX,D);
+        if fit_to > fitness(x(i,:),D)
+            x(i,:) = ToX;
+        elseif rand(1,1) <= exp((fitness(x(i,:),D) - fit_to)/(N-t))
+            x(i,:) = ToX;
+        end
         x(i,:) = min(XMAX,x(i,:));
         x(i,:) = max(XMIN,x(i,:));
+        
+        x(i,:) = roundn(x(i,:),-eps);
+        
         %disp(x(i,:));
         disp(i);
         if fitness(x(i,:),D) > p(i)
